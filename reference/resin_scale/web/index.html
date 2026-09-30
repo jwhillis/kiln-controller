@@ -1,0 +1,743 @@
+<!DOCTYPE html><html><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Resin Scale</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,sans-serif;background:#1a1a2e;color:#eee;
+     min-height:100vh;display:flex;flex-direction:column;align-items:center;
+     padding:20px 16px 40px}
+h1{font-size:1.6rem;color:#4fc3f7;margin-top:4px;margin-bottom:2px}
+.sub{color:#607d8b;font-size:.85rem;margin-bottom:16px}
+.card{background:#16213e;border-radius:16px;padding:20px;width:100%;
+      max-width:520px;box-shadow:0 8px 32px rgba(0,0,0,.4);margin-bottom:14px}
+.card-title{font-size:.8rem;text-transform:uppercase;letter-spacing:.08em;
+            color:#546e7a;margin-bottom:14px}
+.hidden{display:none!important}
+input,select{padding:9px 12px;border-radius:8px;border:1px solid #0f3460;
+      background:#0f3460;color:#fff;font-size:1rem;width:100%;min-width:0}
+input:focus,select:focus{outline:2px solid #0288d1;outline-offset:-1px}
+label.f{display:block;font-size:.75rem;color:#90caf9;margin-bottom:5px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;
+     padding:11px 18px;background:#0288d1;border:none;border-radius:9px;color:#fff;
+     font-size:.95rem;font-weight:600;cursor:pointer;transition:background .15s,transform .1s}
+.btn:hover{background:#0277bd}
+.btn:active{transform:scale(.97)}
+.btn:disabled{opacity:.4;cursor:default;transform:none}
+.btn.ghost{background:#0f3460;color:#90caf9;font-weight:500}
+.btn.ghost:hover{background:#15407a}
+.btn.danger{background:#c62828}.btn.danger:hover{background:#b71c1c}
+.btn.ghost.danger{background:transparent;color:#ef9a9a;border:1px solid #5c2a35}
+.btn.go{background:#2e7d32}.btn.go:hover{background:#1b5e20}
+.btn.big{width:100%;padding:15px;font-size:1.1rem;border-radius:12px}
+.btn.sm{padding:7px 12px;font-size:.8rem;border-radius:7px}
+
+/* ── AP banner ── */
+#apBanner{width:100%;max-width:520px;margin-bottom:14px;background:#0f3460;
+          border-radius:10px;padding:10px 14px;font-size:.83rem;color:#90caf9;
+          display:flex;align-items:center;gap:10px}
+#apBanner a{margin-left:auto;color:#4fc3f7;font-weight:600;text-decoration:none;white-space:nowrap}
+
+/* ── Weight readout ── */
+.wcard{position:sticky;top:8px;z-index:5;padding:16px 20px}
+.wrow{display:flex;align-items:center;gap:14px}
+.wval{flex:1;font-size:3.2rem;font-weight:700;color:#4fc3f7;letter-spacing:-1px;
+      font-variant-numeric:tabular-nums;line-height:1;white-space:nowrap;overflow:hidden}
+.wval small{font-size:1.2rem;font-weight:600;color:#607d8b;margin-left:6px;letter-spacing:0}
+#tareBtn{padding:16px 22px;font-size:1.05rem;letter-spacing:.06em;border-radius:12px;
+         box-shadow:0 4px 16px rgba(2,136,209,.35)}
+.wstat{display:flex;align-items:center;gap:8px;margin-top:10px;font-size:.78rem}
+.dot{width:10px;height:10px;border-radius:50%;background:#455a64;transition:background .2s}
+#wState{font-weight:600;letter-spacing:.06em;color:#607d8b}
+.seg{display:inline-flex;background:#0a1628;border-radius:8px;padding:3px;gap:2px}
+.seg button{background:transparent;border:none;color:#607d8b;padding:6px 12px;border-radius:6px;
+            font-size:.8rem;font-weight:600;cursor:pointer}
+.seg button.on{background:#0288d1;color:#fff}
+.wstat .seg{margin-left:auto}
+
+/* ── Tabs ── */
+.tabs{width:100%;max-width:520px;display:flex;gap:6px;margin-bottom:14px;
+      background:#16213e;border-radius:12px;padding:5px}
+.tabs button{flex:1;background:transparent;border:none;color:#607d8b;padding:11px;
+             border-radius:9px;font-size:.95rem;font-weight:600;cursor:pointer}
+.tabs button.on{background:#0f3460;color:#4fc3f7}
+
+/* ── Mix setup ── */
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px}
+.ratio{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.ratio input{text-align:center;font-size:1.3rem;font-weight:700}
+.ratio .colon{font-size:1.5rem;color:#546e7a;font-weight:700}
+.ratio .tag{font-size:.7rem;color:#546e7a;text-transform:uppercase;letter-spacing:.06em;
+            text-align:center;margin-top:4px}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px}
+.chip{background:#0a1628;border:1px solid #1e3a5f;color:#90caf9;padding:5px 11px;
+      border-radius:16px;font-size:.8rem;cursor:pointer}
+.chip:hover{border-color:#4fc3f7}
+.prow{display:flex;gap:8px;margin-bottom:16px}
+.prow select{flex:1}
+.fld{margin-bottom:14px}
+.inunit{position:relative}
+.inunit span{position:absolute;right:12px;top:50%;transform:translateY(-50%);
+             color:#546e7a;font-size:.85rem;pointer-events:none}
+.inunit input{padding-right:42px}
+.hint{font-size:.75rem;color:#546e7a;margin-top:5px;line-height:1.4}
+.sep{height:1px;background:#0f3460;margin:4px 0 16px}
+.summary{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:16px}
+.summary div{background:#0a1628;border-radius:10px;padding:10px 6px;text-align:center}
+.summary b{display:block;font-size:1.15rem;font-variant-numeric:tabular-nums}
+.summary span{font-size:.66rem;color:#546e7a;text-transform:uppercase;letter-spacing:.07em}
+.summary em{display:block;font-style:normal;font-size:.7rem;color:#607d8b;margin-top:2px}
+.cA{color:#4fc3f7}.cB{color:#ffb74d}
+
+/* ── Beakers ── */
+.beakers{display:flex;justify-content:center;gap:34px;margin:6px 0 18px}
+.bk-wrap{display:flex;flex-direction:column;align-items:center;gap:6px;transition:opacity .3s}
+.bk-wrap.dim{opacity:.35}
+.bk-lbl{font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em}
+.beaker{--c:#4fc3f7;position:relative;width:104px;height:210px;background:#0a1628;
+        border:2px solid #1e3a5f;border-top:none;border-radius:0 0 20px 20px;overflow:hidden;
+        background-image:repeating-linear-gradient(to top,transparent 0,transparent calc(8% - 1px),
+          rgba(255,255,255,.05) calc(8% - 1px),rgba(255,255,255,.05) 8%)}
+.bk-fill{position:absolute;left:0;right:0;bottom:0;height:0;background:var(--c);
+         box-shadow:inset 0 3px 0 rgba(255,255,255,.35);transition:height .15s linear,background .25s}
+.bk-target{position:absolute;left:0;right:0;bottom:80%;border-top:2px dashed rgba(255,255,255,.75)}
+.bk-target::after{content:'TARGET';position:absolute;right:4px;top:2px;font-size:.55rem;
+         letter-spacing:.1em;color:rgba(255,255,255,.6);font-weight:700}
+.bk-pct{position:absolute;left:0;right:0;bottom:8px;text-align:center;font-size:.85rem;
+        font-weight:700;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.6);font-variant-numeric:tabular-nums}
+.bk-val{font-size:1.3rem;font-weight:700;font-variant-numeric:tabular-nums}
+.bk-tgt{font-size:.75rem;color:#607d8b;font-variant-numeric:tabular-nums;text-align:center}
+.beaker.ok{--c:#4caf50;box-shadow:0 0 18px rgba(76,175,80,.45)}
+.beaker.over{--c:#ef5350;box-shadow:0 0 18px rgba(239,83,80,.45)}
+.guide{text-align:center;font-size:1.6rem;font-weight:700;margin-bottom:4px;font-variant-numeric:tabular-nums}
+.guide-sub{text-align:center;font-size:.83rem;color:#607d8b;margin-bottom:16px;min-height:1.2em;line-height:1.4}
+.row-btns{display:flex;gap:8px;margin-top:10px}
+.row-btns .btn{flex:1}
+
+/* ── Results / count ── */
+table.res{width:100%;border-collapse:collapse;font-size:.92rem;margin-bottom:16px}
+table.res td{padding:9px 4px;border-bottom:1px solid #0f3460;font-variant-numeric:tabular-nums}
+table.res td:last-child{text-align:right;font-weight:600}
+table.res td:first-child{color:#78909c}
+.verdict{text-align:center;padding:12px;border-radius:10px;margin-bottom:16px;font-weight:600}
+.count-big{text-align:center;font-size:4.2rem;font-weight:700;color:#4fc3f7;line-height:1;
+           font-variant-numeric:tabular-nums;margin:8px 0 4px}
+.count-big small{font-size:1.2rem;color:#607d8b;margin-left:6px}
+.count-meta{text-align:center;font-size:.85rem;color:#607d8b;margin-bottom:14px;font-variant-numeric:tabular-nums}
+.bar{height:14px;background:#0a1628;border-radius:7px;overflow:hidden;margin:6px 0 4px}
+.bar div{height:100%;width:0;background:#4fc3f7;border-radius:7px;transition:width .15s,background .2s}
+.steps{counter-reset:s}
+.stp{display:flex;gap:12px;padding:12px 0;border-top:1px solid #0f3460;align-items:flex-start}
+.stp:first-child{border-top:none;padding-top:0}
+.stp::before{counter-increment:s;content:counter(s);flex:0 0 24px;height:24px;border-radius:50%;
+         background:#0f3460;color:#4fc3f7;display:flex;align-items:center;justify-content:center;
+         font-size:.8rem;font-weight:700}
+.stp>div{flex:1;min-width:0}
+.stp p{font-size:.85rem;color:#90caf9;margin-bottom:8px;line-height:1.4}
+.inl{display:flex;gap:8px;align-items:center}
+.inl input{width:90px;flex:0 0 90px}
+.warn{background:rgba(255,152,0,.12);color:#ffb74d;border-radius:8px;padding:8px 10px;
+      font-size:.78rem;margin-top:10px;line-height:1.4}
+.nav{margin-top:6px;font-size:.82rem}
+.nav a{color:#546e7a;text-decoration:none}.nav a:hover{color:#90caf9}
+@media (max-width:400px){
+  .wval{font-size:2.6rem}
+  .beakers{gap:18px}
+  .beaker{width:88px;height:180px}
+}
+</style></head><body>
+<h1>&#9878; Resin Scale</h1>
+<p class="sub" id="host">scale.local</p>
+
+<div id="apBanner" class="hidden">
+  <span>&#128246; Running on its own <b>Scale-Setup</b> hotspot</span>
+  <a href="/wifi-setup">Set up WiFi &rarr;</a>
+</div>
+
+<!-- ── Live weight ── -->
+<div class="card wcard">
+  <div class="wrow">
+    <div class="wval"><span id="wNum">&mdash;</span><small id="wUnit">g</small></div>
+    <button class="btn" id="tareBtn" onclick="doTare()">TARE</button>
+  </div>
+  <div class="wstat">
+    <div class="dot" id="wDot"></div><span id="wState">CONNECTING</span>
+    <div class="seg" id="unitSeg">
+      <button data-u="g" onclick="setUnit('g')">g</button>
+      <button data-u="oz" onclick="setUnit('oz')">oz</button>
+    </div>
+  </div>
+</div>
+
+<div class="tabs">
+  <button data-t="mix" onclick="setTab('mix')">&#129514; Mix Resin</button>
+  <button data-t="count" onclick="setTab('count')">&#128297; Count Parts</button>
+</div>
+
+<!-- ════════════════ MIX ════════════════ -->
+<section id="tab-mix" style="width:100%;max-width:520px">
+
+  <!-- Setup -->
+  <div class="card" id="setupCard">
+    <div class="card-title">Mix Setup</div>
+    <div class="prow">
+      <select id="presetSel" onchange="applyPreset()"><option value="">Saved products&hellip;</option></select>
+      <button class="btn ghost sm" onclick="savePreset()">Save</button>
+      <button class="btn ghost sm" id="presetDel" onclick="deletePreset()" disabled>&#10005;</button>
+    </div>
+
+    <label class="f">Mix ratio (A : B)</label>
+    <div class="ratio">
+      <div style="flex:1"><input type="number" id="rA" min="0" step="any" inputmode="decimal"><div class="tag cA">Part A</div></div>
+      <div class="colon">:</div>
+      <div style="flex:1"><input type="number" id="rB" min="0" step="any" inputmode="decimal"><div class="tag cB">Part B</div></div>
+    </div>
+    <div class="chips">
+      <span class="chip" onclick="setRatio(1,1)">1 : 1</span>
+      <span class="chip" onclick="setRatio(2,1)">2 : 1</span>
+      <span class="chip" onclick="setRatio(3,1)">3 : 1</span>
+      <span class="chip" onclick="setRatio(4,1)">4 : 1</span>
+      <span class="chip" onclick="setRatio(10,1)">10 : 1</span>
+      <span class="chip" onclick="setRatio(100,45)">100 : 45</span>
+    </div>
+
+    <div class="fld">
+      <label class="f">Ratio is measured by</label>
+      <div class="seg" id="modeSeg">
+        <button data-m="w" onclick="setMode('w')">Weight</button>
+        <button data-m="v" onclick="setMode('v')">Volume</button>
+      </div>
+      <p class="hint" id="modeHint"></p>
+    </div>
+
+    <div class="grid2" id="sgRow">
+      <div><label class="f">Part A specific gravity</label>
+        <input type="number" id="sgA" min="0.1" step="0.01" inputmode="decimal"></div>
+      <div><label class="f">Part B specific gravity</label>
+        <input type="number" id="sgB" min="0.1" step="0.01" inputmode="decimal"></div>
+    </div>
+
+    <div class="grid2">
+      <div><label class="f" id="amtLbl">Mixed amount needed</label>
+        <div class="inunit"><input type="number" id="amt" min="0" step="any" inputmode="decimal"><span id="amtUnit">g</span></div></div>
+      <div><label class="f">Extra for waste</label>
+        <div class="inunit"><input type="number" id="extra" min="0" step="1" inputmode="numeric"><span>%</span></div></div>
+    </div>
+    <div class="fld">
+      <label class="f">Tolerance (per part)</label>
+      <div class="inunit" style="max-width:50%"><input type="number" id="tol" min="0.1" step="0.1" inputmode="decimal"><span>&plusmn;%</span></div>
+    </div>
+
+    <div class="sep"></div>
+    <div class="summary">
+      <div><span>Part A</span><b class="cA" id="sumA">&mdash;</b><em id="sumAv"></em></div>
+      <div><span>Part B</span><b class="cB" id="sumB">&mdash;</b><em id="sumBv"></em></div>
+      <div><span>Total</span><b id="sumT">&mdash;</b><em id="sumTv"></em></div>
+    </div>
+    <button class="btn big" id="startBtn" onclick="startMix()">Tare cup &amp; pour Part A</button>
+    <p class="hint" style="text-align:center;margin-top:8px">Put your empty mixing cup on the scale first.</p>
+  </div>
+
+  <!-- Pour -->
+  <div class="card hidden" id="pourCard">
+    <div class="card-title" id="pourTitle">Pour Part A</div>
+    <div class="beakers">
+      <div class="bk-wrap" id="wrapA">
+        <div class="bk-lbl cA">Part A</div>
+        <div class="beaker" id="bkA" style="--c:#4fc3f7"><div class="bk-fill" id="fillA"></div><div class="bk-target"></div><div class="bk-pct" id="pctA"></div></div>
+        <div class="bk-val" id="valA">0.0</div>
+        <div class="bk-tgt" id="tgtA"></div>
+      </div>
+      <div class="bk-wrap dim" id="wrapB">
+        <div class="bk-lbl cB">Part B</div>
+        <div class="beaker" id="bkB" style="--c:#ffb74d"><div class="bk-fill" id="fillB"></div><div class="bk-target"></div><div class="bk-pct" id="pctB"></div></div>
+        <div class="bk-val" id="valB">0.0</div>
+        <div class="bk-tgt" id="tgtB"></div>
+      </div>
+    </div>
+    <div class="guide" id="guide"></div>
+    <div class="guide-sub" id="guideSub"></div>
+    <button class="btn big" id="nextBtn" onclick="nextStep()">Lock Part A &rarr;</button>
+    <div class="row-btns">
+      <button class="btn ghost hidden" id="unlockBtn" onclick="unlockA()">&#8634; Back to Part A</button>
+      <button class="btn ghost danger" onclick="cancelMix()">Cancel mix</button>
+    </div>
+  </div>
+
+  <!-- Done -->
+  <div class="card hidden" id="doneCard">
+    <div class="card-title">Mix Complete</div>
+    <div class="verdict" id="verdict"></div>
+    <table class="res" id="resTable"></table>
+    <button class="btn big" onclick="newMix()">New mix</button>
+  </div>
+</section>
+
+<!-- ════════════════ COUNT ════════════════ -->
+<section id="tab-count" class="hidden" style="width:100%;max-width:520px">
+  <div class="card">
+    <div class="card-title">Count</div>
+    <div class="count-big"><span id="cNum">&mdash;</span><small>pcs</small></div>
+    <div class="count-meta" id="cMeta">Take a sample to start counting</div>
+    <div id="cTargetWrap" class="hidden">
+      <div class="bar"><div id="cBar"></div></div>
+      <div class="count-meta" id="cTargetTxt" style="margin-bottom:6px"></div>
+    </div>
+    <div id="cWarn" class="warn hidden"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Sample</div>
+    <div class="steps">
+      <div class="stp"><div>
+        <p>Put the empty container on the scale and tare.</p>
+        <button class="btn ghost sm" onclick="doTare()">Tare</button>
+      </div></div>
+      <div class="stp"><div>
+        <p>Add a known number of parts &mdash; more parts gives a more accurate count.</p>
+        <div class="inl">
+          <input type="number" id="sampleN" min="1" step="1" inputmode="numeric">
+          <span style="color:#607d8b;font-size:.85rem">parts</span>
+          <button class="btn sm" id="sampleBtn" onclick="takeSample()" style="margin-left:auto">Sample</button>
+        </div>
+        <p class="hint" id="sampleSt"></p>
+      </div></div>
+      <div class="stp"><div>
+        <p>Pour in the rest. Tap <b>Refine</b> partway through to re-average the piece
+           weight over the larger count.</p>
+        <div class="inl" style="flex-wrap:wrap">
+          <button class="btn ghost sm" id="refineBtn" onclick="refine()">Refine</button>
+          <button class="btn ghost sm" onclick="clearSample()">Clear</button>
+        </div>
+      </div></div>
+    </div>
+    <div class="sep" style="margin-top:12px"></div>
+    <div class="grid2" style="margin-bottom:0">
+      <div><label class="f">Target count (optional)</label>
+        <input type="number" id="cTarget" min="0" step="1" inputmode="numeric" placeholder="none"></div>
+      <div><label class="f">Piece weight</label>
+        <div class="inunit"><input type="number" id="cUnitIn" min="0" step="any" inputmode="decimal"><span id="cUnitU">g</span></div></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Parts Library</div>
+    <div class="prow" style="margin-bottom:0">
+      <select id="partSel" onchange="applyPart()"><option value="">Saved parts&hellip;</option></select>
+      <button class="btn ghost sm" onclick="savePart()">Save</button>
+      <button class="btn ghost sm" id="partDel" onclick="deletePart()" disabled>&#10005;</button>
+    </div>
+  </div>
+</section>
+
+<div class="nav"><a href="/admin">&#9881; Admin &amp; Calibration</a></div>
+
+<script>
+const G_PER_OZ=28.349523125;
+const $=id=>document.getElementById(id);
+function lsGet(k,d){try{const v=localStorage.getItem('rs_'+k);return v==null?d:JSON.parse(v);}catch(e){return d;}}
+function lsSet(k,v){try{localStorage.setItem('rs_'+k,JSON.stringify(v));}catch(e){}}
+function post(url,body){
+  return fetch(url,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:body||''});
+}
+function num(el,d){const v=parseFloat($(el).value);return isFinite(v)?v:d;}
+function r2(x){return Math.round(x*100)/100;}
+
+// ── Units ──────────────────────────────────────────────────
+let unit=lsGet('unit','g');
+function fmtW(g,dec){
+  if(!isFinite(g))return '—';
+  const v=unit==='oz'?g/G_PER_OZ:g;
+  const d=dec!=null?dec:(unit==='oz'?2:1);
+  const s=v.toFixed(d);
+  return /^-0\.?0*$/.test(s)?s.slice(1):s;
+}
+function fmtWU(g,dec){return fmtW(g,dec)+' '+unit;}
+function setUnit(u){
+  unit=u;lsSet('unit',u);
+  document.querySelectorAll('#unitSeg button').forEach(b=>b.classList.toggle('on',b.dataset.u===u));
+  $('wUnit').textContent=u;
+  loadSetupFields();loadCountFields();
+  parts.forEach(p=>p.label=partLabel(p));fillSelect('partSel',parts,'Saved parts…');
+  if(M.phase==='done')renderDone();
+  render();
+}
+
+// ── Tabs ───────────────────────────────────────────────────
+function setTab(t){
+  lsSet('tab',t);
+  document.querySelectorAll('.tabs button').forEach(b=>b.classList.toggle('on',b.dataset.t===t));
+  $('tab-mix').classList.toggle('hidden',t!=='mix');
+  $('tab-count').classList.toggle('hidden',t!=='count');
+}
+
+// ── Live weight polling ────────────────────────────────────
+let W={g:0,stable:false,taring:false,ok:false,tare_sum:0,ap:false};
+let online=false,inflight=false,tareWaiters=[],lastOk=0;
+function poll(){
+  if(inflight)return;inflight=true;
+  const started=Date.now();
+  fetch('/api/weight',{cache:'no-store'}).then(r=>r.json()).then(d=>{
+    W=d;online=true;lastOk=Date.now();
+    if(!d.taring){
+      tareWaiters=tareWaiters.filter(w=>{if(started>w.t){w.res();return false;}return true;});
+    }
+    render();
+  }).catch(()=>{if(Date.now()-lastOk>2000){online=false;render();}})
+    .finally(()=>{inflight=false;});
+}
+setInterval(poll,150);
+
+function doTare(){
+  if(M.phase==='B'&&!confirm('Part B is being poured. Tare anyway? (Part A stays locked and the reading is corrected.)'))return Promise.resolve(false);
+  return post('/api/tare').then(r=>{
+    if(!r.ok)throw 0;
+    return new Promise(res=>{
+      const w={t:Date.now(),res:()=>res(true)};tareWaiters.push(w);
+      setTimeout(()=>{if(tareWaiters.includes(w)){tareWaiters=tareWaiters.filter(x=>x!==w);res(false);}},5000);
+    });
+  }).catch(()=>false);
+}
+
+function renderWeight(){
+  const st=!online?['#ef5350','OFFLINE']:!W.ok?['#ef5350','NO LOAD CELL']:
+    W.taring?['#ffb74d','TARING…']:W.stable?['#4caf50','STABLE']:['#ff9800','SETTLING'];
+  $('wDot').style.background=st[0];
+  $('wState').textContent=st[1];$('wState').style.color=st[0];
+  $('wNum').textContent=online&&W.ok&&!W.taring?fmtW(W.g):'—';
+  $('apBanner').classList.toggle('hidden',!W.ap);
+  $('host').textContent=W.ap?'192.168.4.1':'scale.local';
+}
+
+// ════════════════ MIX ════════════════
+const MIX_DEFAULT={phase:'setup',rA:1,rB:1,mode:'w',sgA:1.1,sgB:1.0,amt:100,extra:0,tol:1,
+                   tareBase:0,lockedA:0,finalB:0,targetA:0,targetB:0,kB:1,plannedB:0};
+let M=Object.assign({},MIX_DEFAULT,lsGet('mix',{}));
+let lastState='';
+function saveMix(){lsSet('mix',M);}
+
+// Grams-per-A → grams-per-B multiplier, and the planned part weights.
+function computeTargets(){
+  const rA=M.rA,rB=M.rB,sum=rA+rB;
+  if(!(rA>0&&rB>0&&M.amt>0))return null;
+  const tot=M.amt*(1+M.extra/100);
+  if(M.mode==='w'){
+    return {A:tot*rA/sum,B:tot*rB/sum,kB:rB/rA};
+  }
+  if(!(M.sgA>0&&M.sgB>0))return null;
+  const vA=tot*rA/sum,vB=tot*rB/sum;
+  return {A:vA*M.sgA,B:vB*M.sgB,vA,vB,kB:(rB*M.sgB)/(rA*M.sgA)};
+}
+
+function loadSetupFields(){
+  $('rA').value=M.rA;$('rB').value=M.rB;
+  $('sgA').value=M.sgA;$('sgB').value=M.sgB;
+  $('extra').value=M.extra;$('tol').value=M.tol;
+  $('amt').value=M.mode==='v'?r2(M.amt):r2(unit==='oz'?M.amt/G_PER_OZ:M.amt);
+  document.querySelectorAll('#modeSeg button').forEach(b=>b.classList.toggle('on',b.dataset.m===M.mode));
+  $('sgRow').classList.toggle('hidden',M.mode!=='v');
+  $('amtUnit').textContent=M.mode==='v'?'mL':unit;
+  $('amtLbl').textContent=M.mode==='v'?'Mixed volume needed':'Mixed amount needed';
+  $('modeHint').textContent=M.mode==='v'
+    ?'Volume ratios are converted to weight using each part’s specific gravity (density, g/mL) from the product data sheet.'
+    :'Most data sheets list both — use the “by weight” ratio when there is one.';
+  updateSummary();
+}
+function readSetupFields(){
+  M.rA=num('rA',0);M.rB=num('rB',0);
+  M.sgA=num('sgA',0);M.sgB=num('sgB',0);
+  M.extra=Math.max(0,num('extra',0));M.tol=Math.max(0.1,num('tol',1));
+  const a=num('amt',0);
+  M.amt=M.mode==='v'?a:(unit==='oz'?a*G_PER_OZ:a);
+  saveMix();updateSummary();
+}
+['rA','rB','sgA','sgB','amt','extra','tol'].forEach(id=>$(id).addEventListener('input',readSetupFields));
+function setRatio(a,b){$('rA').value=a;$('rB').value=b;readSetupFields();}
+function setMode(m){
+  if(m===M.mode)return;
+  // keep roughly the same amount when switching (g ↔ mL via mixed density)
+  const sg=(M.sgA*M.rA+M.sgB*M.rB)/((M.rA+M.rB)||1)||1;
+  M.amt=m==='v'?M.amt/sg:M.amt*sg;
+  M.mode=m;saveMix();loadSetupFields();
+}
+function updateSummary(){
+  const t=computeTargets();
+  $('startBtn').disabled=!t;
+  $('sumA').textContent=t?fmtW(t.A):'—';
+  $('sumB').textContent=t?fmtW(t.B):'—';
+  $('sumT').textContent=t?fmtWU(t.A+t.B):'—';
+  $('sumAv').textContent=t&&t.vA!=null?t.vA.toFixed(1)+' mL':'';
+  $('sumBv').textContent=t&&t.vB!=null?t.vB.toFixed(1)+' mL':'';
+  $('sumTv').textContent=t&&t.vA!=null?(t.vA+t.vB).toFixed(1)+' mL':'';
+}
+
+// Tares done mid-mix (button or BOOT key) shift the reading; tare_sum is the
+// firmware's running total of those shifts, so adding the change since the
+// mix started keeps Part A / Part B measurements continuous.
+function netMix(){return W.g+(W.tare_sum-M.tareBase);}
+
+async function startMix(){
+  readSetupFields();
+  const t=computeTargets();if(!t)return;
+  $('startBtn').disabled=true;$('startBtn').textContent='Taring…';
+  const ok=await doTare();
+  $('startBtn').textContent='Tare cup & pour Part A';$('startBtn').disabled=false;
+  if(!ok){alert('Could not tare the scale — check that the load cell is connected.');return;}
+  Object.assign(M,{phase:'A',targetA:t.A,targetB:t.B,plannedB:t.B,kB:t.kB,
+                   tareBase:W.tare_sum,lockedA:0,finalB:0});
+  saveMix();lastState='';showMixPhase();render();
+}
+function nextStep(){
+  const v=netMix();
+  if(M.phase==='A'){
+    if(v<=0.05){alert('Nothing on the scale yet — pour Part A first.');return;}
+    const dev=(v/M.targetA-1)*100;
+    if(Math.abs(dev)>M.tol&&!confirm('Part A is '+(dev>0?'over':'under')+' target by '+Math.abs(dev).toFixed(1)+
+       '%.\n\nPart B will be adjusted to match the Part A you actually poured, so the ratio stays correct. Continue?'))return;
+    M.lockedA=v;M.targetB=v*M.kB;M.phase='B';
+  }else if(M.phase==='B'){
+    const b=v-M.lockedA;
+    const dev=(b/M.targetB-1)*100;
+    if(dev<-M.tol&&!confirm('Part B is under target by '+Math.abs(dev).toFixed(1)+'%. Finish anyway?'))return;
+    M.finalB=b;M.phase='done';
+  }
+  saveMix();lastState='';showMixPhase();render();
+}
+function unlockA(){M.phase='A';M.lockedA=0;saveMix();lastState='';showMixPhase();render();}
+function cancelMix(){if(M.phase!=='setup'&&!confirm('Cancel this mix?'))return;M.phase='setup';saveMix();showMixPhase();}
+function newMix(){M.phase='setup';saveMix();showMixPhase();}
+
+function showMixPhase(){
+  const p=M.phase;
+  $('setupCard').classList.toggle('hidden',p!=='setup');
+  $('pourCard').classList.toggle('hidden',p!=='A'&&p!=='B');
+  $('doneCard').classList.toggle('hidden',p!=='done');
+  $('tareBtn').disabled=false;
+  if(p==='A'||p==='B'){
+    $('pourTitle').textContent=p==='A'?'Step 1 of 2 — Pour Part A':'Step 2 of 2 — Pour Part B';
+    $('wrapA').classList.toggle('dim',p!=='A');
+    $('wrapB').classList.toggle('dim',p!=='B');
+    $('unlockBtn').classList.toggle('hidden',p!=='B');
+  }
+  if(p==='done')renderDone();
+}
+
+function partState(v,target){
+  const tol=Math.max(target*M.tol/100,0.1);
+  if(v>target+tol)return 'over';
+  if(v>=target-tol)return 'ok';
+  if(v>=target*0.9)return 'near';
+  return 'fill';
+}
+function drawBeaker(k,v,target,active){
+  const frac=target>0?Math.max(0,v)/target:0;
+  $('fill'+k).style.height=Math.min(frac,1.25)*80+'%';
+  const s=active?partState(v,target):(k==='A'&&M.phase==='B'?'ok':'fill');
+  $('bk'+k).className='beaker'+(s==='ok'||s==='over'?' '+s:'');
+  $('pct'+k).textContent=target>0&&v>0.05?Math.round(frac*100)+'%':'';
+  $('val'+k).textContent=fmtWU(Math.max(0,v));
+  $('tgt'+k).textContent='target '+fmtWU(target);
+  return s;
+}
+function renderPour(){
+  const v=netMix();
+  const a=M.phase==='A'?v:M.lockedA;
+  const b=M.phase==='B'?v-M.lockedA:0;
+  drawBeaker('A',a,M.targetA,M.phase==='A');
+  drawBeaker('B',b,M.targetB,M.phase==='B');
+  if($('wrapA').classList.contains('dim'))$('val'+'A').textContent='🔒 '+fmtWU(M.lockedA);
+  const cur=M.phase==='A'?a:b,tgt=M.phase==='A'?M.targetA:M.targetB;
+  const s=partState(cur,tgt);
+  const diff=tgt-cur;
+  const g=$('guide'),sub=$('guideSub');
+  if(!online||!W.ok){g.textContent='—';g.style.color='#607d8b';}
+  else if(s==='over'){g.textContent='Over by '+fmtWU(-diff);g.style.color='#ef5350';}
+  else if(s==='ok'){g.textContent='✓ On target';g.style.color='#4caf50';}
+  else{g.textContent='Add '+fmtWU(diff);g.style.color=M.phase==='A'?'#4fc3f7':'#ffb74d';}
+  let note='';
+  if(s==='near')note='Getting close — slow down.';
+  else if(s==='ok')note=M.phase==='A'?'Lock Part A when the pour has stopped.':'Tap Finish when the pour has stopped.';
+  else if(s==='over'&&M.phase==='A')note='That’s OK — Part B will be scaled to match.';
+  else if(s==='over')note='Ratio is off — add a little Part A to rebalance, or accept it.';
+  if(M.phase==='B'&&Math.abs(M.targetB-M.plannedB)>0.05)
+    note+=(note?' ':'')+'Target adjusted from '+fmtWU(M.plannedB)+' to match the actual Part A.';
+  sub.textContent=note;
+  const nb=$('nextBtn');
+  nb.innerHTML=M.phase==='A'?'&#128274; Lock Part A &rarr; Part B':'&#10003; Finish';
+  nb.className='btn big'+(s==='ok'?' go':'');
+  nb.disabled=!online||!W.ok||W.taring;
+  // haptic tick when a part first reaches target (Android)
+  const key=M.phase+s;
+  if(s==='ok'&&lastState!==key&&navigator.vibrate)try{navigator.vibrate(120);}catch(e){}
+  lastState=key;
+}
+function renderDone(){
+  const a=M.lockedA,b=M.finalB,ideal=a*M.kB;
+  const err=ideal>0?(b/ideal-1)*100:0;
+  const good=Math.abs(err)<=M.tol;
+  const v=$('verdict');
+  v.textContent=(good?'✓ Ratio within tolerance':'⚠ Ratio off by ')+(good?' ('+(err>=0?'+':'')+err.toFixed(1)+'% B)':(err>=0?'+':'')+err.toFixed(1)+'% Part B');
+  v.style.background=good?'rgba(76,175,80,.15)':'rgba(255,152,0,.15)';
+  v.style.color=good?'#81c784':'#ffb74d';
+  const rows=[['Part A',fmtWU(a)],['Part B',fmtWU(b)],['Total mixed',fmtWU(a+b)]];
+  let ratioTxt;
+  if(M.mode==='v'){
+    const vA=a/M.sgA,vB=b/M.sgB;
+    rows.push(['Volume',(vA+vB).toFixed(1)+' mL']);
+    ratioTxt=M.rA+' : '+(vB/vA*M.rA).toFixed(2)+' by vol';
+  }else ratioTxt=M.rA+' : '+(b/a*M.rA).toFixed(2)+' by wt';
+  rows.push(['Target ratio',M.rA+' : '+M.rB+(M.mode==='v'?' by vol':' by wt')],['Actual ratio',ratioTxt],
+            ['Ideal Part B for this A',fmtWU(ideal)]);
+  const t=$('resTable');t.innerHTML='';
+  rows.forEach(([k,x])=>{const r=t.insertRow();r.insertCell().textContent=k;r.insertCell().textContent=x;});
+}
+
+// ── Presets (stored on the scale, shared by every phone) ──
+let presets=[];
+function fillSelect(sel,list,ph){
+  const s=$(sel),cur=s.value;s.innerHTML='';
+  s.add(new Option(ph,''));
+  list.forEach((p,i)=>s.add(new Option(p.label||p.name,String(i))));
+  s.value=cur&&+cur<list.length?cur:'';
+}
+function storeGet(k){return fetch('/api/store?key='+k,{cache:'no-store'}).then(r=>r.json()).then(l=>Array.isArray(l)?l:[]).catch(()=>[]);}
+function storePut(k,l){return post('/api/store','key='+k+'&data='+encodeURIComponent(JSON.stringify(l)));}
+function presetLabel(p){return p.name+'  ('+p.rA+':'+p.rB+(p.mode==='v'?' vol':'')+')';}
+function loadPresets(){storeGet('presets').then(l=>{presets=l;presets.forEach(p=>p.label=presetLabel(p));fillSelect('presetSel',presets,'Saved products…');$('presetDel').disabled=!$('presetSel').value;});}
+function applyPreset(){
+  const i=$('presetSel').value;$('presetDel').disabled=i==='';
+  if(i==='')return;const p=presets[+i];
+  M.rA=p.rA;M.rB=p.rB;
+  if(p.mode!==M.mode)setMode(p.mode);
+  if(p.mode==='v'){M.sgA=p.sgA;M.sgB=p.sgB;}
+  saveMix();loadSetupFields();
+}
+function savePreset(){
+  readSetupFields();
+  const i=$('presetSel').value;
+  const name=prompt('Product name (e.g. "ArtResin", "Smooth-On Mold Star 30"):',i!==''?presets[+i].name:'');
+  if(!name)return;
+  const p={name:name.trim(),rA:M.rA,rB:M.rB,mode:M.mode,sgA:M.sgA,sgB:M.sgB};
+  const ex=presets.findIndex(x=>x.name.toLowerCase()===p.name.toLowerCase());
+  if(ex>=0)presets[ex]=p;else presets.push(p);
+  presets.sort((a,b)=>a.name.localeCompare(b.name));
+  storePut('presets',presets.map(({label,...x})=>x)).then(()=>{
+    presets.forEach(q=>q.label=presetLabel(q));
+    fillSelect('presetSel',presets,'Saved products…');
+    $('presetSel').value=String(presets.findIndex(x=>x.name===p.name));$('presetDel').disabled=false;
+  });
+}
+function deletePreset(){
+  const i=$('presetSel').value;if(i==='')return;
+  if(!confirm('Delete "'+presets[+i].name+'"?'))return;
+  presets.splice(+i,1);$('presetSel').value='';
+  storePut('presets',presets.map(({label,...x})=>x)).then(loadPresets);
+}
+
+// ════════════════ COUNT ════════════════
+const C=Object.assign({unitG:0,sampleN:10,target:0},lsGet('count',{}));
+let pendingSample=null,lastCount=-1;
+function saveCount(){lsSet('count',C);}
+function loadCountFields(){
+  $('sampleN').value=C.sampleN;
+  $('cTarget').value=C.target||'';
+  $('cUnitU').textContent=unit;
+  if(document.activeElement!==$('cUnitIn'))
+    $('cUnitIn').value=C.unitG>0?+(unit==='oz'?C.unitG/G_PER_OZ:C.unitG).toPrecision(4):'';
+}
+$('sampleN').addEventListener('input',()=>{C.sampleN=Math.max(1,Math.round(num('sampleN',10)));saveCount();});
+$('cTarget').addEventListener('input',()=>{C.target=Math.max(0,Math.round(num('cTarget',0)));saveCount();render();});
+$('cUnitIn').addEventListener('input',()=>{
+  const v=num('cUnitIn',0);C.unitG=unit==='oz'?v*G_PER_OZ:v;saveCount();render();
+});
+function takeSample(){
+  if(!W.ok){$('sampleSt').textContent='No reading from the load cell.';return;}
+  const n=C.sampleN;
+  if(W.g<0.2){$('sampleSt').textContent='Add the '+n+' sample parts first.';return;}
+  pendingSample=n;$('sampleSt').textContent='Waiting for a stable reading…';
+}
+function refine(){
+  const cnt=C.unitG>0?Math.round(W.g/C.unitG):0;
+  if(cnt<=C.sampleN){$('sampleSt').textContent='Add more parts than the sample count before refining.';return;}
+  pendingSample=cnt;$('sampleSt').textContent='Refining over '+cnt+' parts…';
+}
+function clearSample(){C.unitG=0;saveCount();loadCountFields();$('sampleSt').textContent='';render();}
+function renderCount(){
+  if(pendingSample&&W.ok&&W.stable&&!W.taring){
+    C.unitG=W.g/pendingSample;saveCount();
+    $('sampleSt').textContent='✓ Piece weight '+fmtWU(C.unitG,unit==='oz'?5:4)+' from '+pendingSample+' parts.';
+    pendingSample=null;loadCountFields();
+  }
+  const has=C.unitG>0;
+  const cnt=has?Math.max(0,Math.round(W.g/C.unitG)):null;
+  $('cNum').textContent=has&&online&&W.ok&&!W.taring?cnt:'—';
+  $('cMeta').textContent=has?fmtWU(C.unitG,unit==='oz'?5:4)+' / piece · net '+fmtWU(W.g)
+                             :'Take a sample to start counting';
+  $('refineBtn').disabled=!has;
+  const showT=has&&C.target>0;
+  $('cTargetWrap').classList.toggle('hidden',!showT);
+  if(showT){
+    const f=cnt/C.target;
+    $('cBar').style.width=Math.min(f,1)*100+'%';
+    $('cBar').style.background=cnt===C.target?'#4caf50':cnt>C.target?'#ef5350':'#4fc3f7';
+    $('cTargetTxt').textContent=cnt===C.target?'✓ Target reached':
+      cnt<C.target?(C.target-cnt)+' to go (of '+C.target+')':(cnt-C.target)+' over target';
+    if(cnt===C.target&&lastCount!==cnt&&navigator.vibrate)try{navigator.vibrate(120);}catch(e){}
+  }
+  lastCount=cnt;
+  // A piece lighter than ~5x the scale's noise can't be counted reliably.
+  const w=$('cWarn');
+  if(has&&C.unitG<0.5){
+    w.classList.remove('hidden');
+    w.textContent='⚠ Very light parts ('+fmtWU(C.unitG,3)+' each) — the count can drift by a piece or more. Use a larger sample and Refine often.';
+  }else if(has&&cnt>0&&Math.abs(W.g/C.unitG-cnt)>0.3&&W.stable){
+    w.classList.remove('hidden');
+    w.textContent='⚠ Weight is between whole counts — parts may vary in weight. Try Refine.';
+  }else w.classList.add('hidden');
+}
+
+// ── Parts library ──
+let parts=[];
+function partLabel(p){return p.name+'  ('+fmtWU(p.unitG,unit==='oz'?4:3)+')';}
+function loadParts(){storeGet('parts').then(l=>{parts=l;parts.forEach(p=>p.label=partLabel(p));fillSelect('partSel',parts,'Saved parts…');$('partDel').disabled=!$('partSel').value;});}
+function applyPart(){
+  const i=$('partSel').value;$('partDel').disabled=i==='';
+  if(i==='')return;C.unitG=parts[+i].unitG;saveCount();loadCountFields();
+  $('sampleSt').textContent='Using saved piece weight for '+parts[+i].name+'.';render();
+}
+function savePart(){
+  if(!(C.unitG>0)){alert('Take a sample first.');return;}
+  const i=$('partSel').value;
+  const name=prompt('Part name (e.g. "M3x8 screw"):',i!==''?parts[+i].name:'');
+  if(!name)return;
+  const p={name:name.trim(),unitG:C.unitG};
+  const ex=parts.findIndex(x=>x.name.toLowerCase()===p.name.toLowerCase());
+  if(ex>=0)parts[ex]=p;else parts.push(p);
+  parts.sort((a,b)=>a.name.localeCompare(b.name));
+  storePut('parts',parts.map(({label,...x})=>x)).then(()=>{
+    parts.forEach(q=>q.label=partLabel(q));
+    fillSelect('partSel',parts,'Saved parts…');
+    $('partSel').value=String(parts.findIndex(x=>x.name===p.name));$('partDel').disabled=false;
+  });
+}
+function deletePart(){
+  const i=$('partSel').value;if(i==='')return;
+  if(!confirm('Delete "'+parts[+i].name+'"?'))return;
+  parts.splice(+i,1);$('partSel').value='';
+  storePut('parts',parts.map(({label,...x})=>x)).then(loadParts);
+}
+
+// ── Render loop ────────────────────────────────────────────
+function render(){
+  renderWeight();
+  if(M.phase==='A'||M.phase==='B')renderPour();
+  renderCount();
+}
+
+setUnit(unit);
+setTab(lsGet('tab','mix'));
+showMixPhase();
+loadPresets();loadParts();
+poll();
+</script>
+</body></html>

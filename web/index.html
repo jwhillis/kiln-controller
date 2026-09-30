@@ -1,0 +1,759 @@
+<!DOCTYPE html><html><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1280">
+<title>Kiln Controller</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,sans-serif;background:#1a1a2e;color:#eee;min-height:100vh;padding:16px 20px 32px}
+h1{font-size:1.45rem;color:#4fc3f7;margin:0}
+.sub{color:#607d8b;font-size:.82rem}
+.card{background:#16213e;border-radius:16px;padding:16px 18px;box-shadow:0 8px 32px rgba(0,0,0,.4);margin-bottom:14px}
+.card-title{font-size:.75rem;text-transform:uppercase;letter-spacing:.08em;color:#546e7a;margin-bottom:10px}
+.hidden{display:none!important}
+input,select,textarea{padding:8px 10px;border-radius:8px;border:1px solid #0f3460;background:#0f3460;color:#fff;font-size:.92rem;width:100%;min-width:0}
+input:focus,select:focus{outline:2px solid #0288d1;outline-offset:-1px}
+label.f{display:block;font-size:.72rem;color:#90caf9;margin-bottom:4px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:9px 16px;background:#0288d1;border:none;border-radius:9px;color:#fff;font-size:.9rem;font-weight:600;cursor:pointer}
+.btn:hover{background:#0277bd}
+.btn:disabled{opacity:.4;cursor:default}
+.btn.ghost{background:#0f3460;color:#90caf9;font-weight:500}
+.btn.ghost:hover{background:#15407a}
+.btn.danger{background:#c62828}.btn.danger:hover{background:#b71c1c}
+.btn.go{background:#2e7d32}.btn.go:hover{background:#1b5e20}
+.btn.sm{padding:6px 11px;font-size:.78rem;border-radius:7px}
+.btn.warn{background:#ef6c00}
+#apBanner{margin-bottom:12px;background:#0f3460;border-radius:10px;padding:10px 14px;font-size:.83rem;color:#90caf9;display:flex;align-items:center;gap:10px}
+#apBanner a{margin-left:auto;color:#4fc3f7;font-weight:600;text-decoration:none}
+.top{display:flex;align-items:flex-end;gap:18px;margin-bottom:12px}
+.tabs{display:flex;gap:6px;background:#16213e;border-radius:12px;padding:5px;margin-left:auto}
+.tabs button{background:transparent;border:none;color:#607d8b;padding:10px 18px;border-radius:9px;font-size:.92rem;font-weight:600;cursor:pointer}
+.tabs button.on{background:#0f3460;color:#4fc3f7}
+.dash{display:grid;grid-template-columns:1fr 340px;gap:14px}
+.live{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.live.wide{grid-template-columns:repeat(6,1fr);margin-bottom:12px}
+.live div{background:#0a1628;border-radius:10px;padding:10px 8px;text-align:center}
+.live b{display:block;font-size:1.2rem;color:#4fc3f7;font-variant-numeric:tabular-nums;line-height:1.15}
+.live span{font-size:.64rem;color:#546e7a;text-transform:uppercase;letter-spacing:.06em}
+.live em{display:block;font-style:normal;font-size:.7rem;color:#607d8b;margin-top:2px}
+.bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px}
+.bar select{width:auto;min-width:180px}
+canvas.chart{width:100%;height:380px;background:#0a1628;border-radius:12px;display:block;cursor:crosshair}
+table.res{width:100%;border-collapse:collapse;font-size:.82rem}
+table.res th{text-align:left;color:#546e7a;font-size:.68rem;text-transform:uppercase;letter-spacing:.06em;padding:6px 4px;border-bottom:1px solid #0f3460}
+table.res td{padding:6px 4px;border-bottom:1px solid #0f3460;font-variant-numeric:tabular-nums}
+table.res tr.on td{color:#4fc3f7}
+.fault{background:rgba(198,40,40,.2);color:#ef9a9a;border-radius:10px;padding:10px 14px;margin-bottom:12px;font-weight:600}
+.warn{background:rgba(255,152,0,.12);color:#ffb74d;border-radius:8px;padding:8px 10px;font-size:.8rem}
+.dot{width:9px;height:9px;border-radius:50%;display:inline-block;margin-right:6px}
+.events{font-size:.8rem;color:#90caf9;max-height:160px;overflow:auto;line-height:1.5}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+.fld{margin-bottom:12px}
+.sec{background:#16213e;border-radius:12px;padding:20px;margin-bottom:14px}
+.sec h2{color:#90caf9;font-size:.9rem;margin-bottom:12px;text-transform:uppercase;letter-spacing:.05em}
+.st{margin-top:8px;font-size:.82rem;color:#80cbc4;min-height:1.2em}
+.prog{background:#0f3460;border-radius:4px;height:8px;margin-top:10px;overflow:hidden;display:none}
+.prog-bar{height:100%;background:#4fc3f7;width:0%}
+.chk{display:flex;align-items:center;gap:8px;font-size:.85rem;color:#90caf9;margin:8px 0}
+.chk input{width:auto}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:flex-end;margin-bottom:8px}
+#pdfView{width:100%;height:520px;border:none;border-radius:10px;background:#0a1628}
+.seg{display:inline-flex;background:#0a1628;border-radius:8px;padding:3px;gap:2px}
+.seg button{background:transparent;border:none;color:#607d8b;padding:6px 12px;border-radius:6px;font-size:.8rem;font-weight:600;cursor:pointer}
+.seg button.on{background:#0288d1;color:#fff}
+</style></head><body>
+<div id="apBanner" class="hidden">
+  <span>Running on its own <b>Kiln-Setup</b> hotspot</span>
+  <a href="/wifi-setup">Set up WiFi &rarr;</a>
+</div>
+<div class="top">
+  <div>
+    <h1>&#9832; Kiln Controller</h1>
+    <p class="sub" id="host">kiln.local</p>
+  </div>
+  <div class="tabs">
+    <button data-t="dash" class="on" onclick="setTab('dash')">Firing</button>
+    <button data-t="edit" onclick="setTab('edit')">Profiles</button>
+    <button data-t="admin" onclick="setTab('admin')">Admin</button>
+  </div>
+</div>
+<div id="faultBanner" class="fault hidden"></div>
+
+<section id="tab-dash">
+  <div class="bar">
+    <select id="profSel"></select>
+    <button class="btn go" id="btnStart" onclick="doStart()">Start</button>
+    <button class="btn ghost" id="btnPause" onclick="doPause()">Pause</button>
+    <button class="btn danger" onclick="post('/api/fire/stop')">Stop</button>
+    <button class="btn ghost sm" onclick="post('/api/fire/skip')">Skip segment</button>
+    <label class="f" style="width:auto;margin:0 0 0 8px">Delay (min)</label>
+    <input id="delayMin" type="number" min="0" step="1" value="0" style="width:70px">
+    <span id="conn" style="margin-left:auto;font-size:.8rem;color:#607d8b"><span class="dot" id="cDot"></span><span id="cTxt">CONNECTING</span></span>
+  </div>
+  <div class="live wide" id="tiles"></div>
+  <div class="dash">
+    <div class="card">
+      <div class="card-title">Temperature / setpoint / output</div>
+      <canvas class="chart" id="chart" width="980" height="380"></canvas>
+    </div>
+    <div>
+      <div class="card">
+        <div class="card-title">Control</div>
+        <div class="live" id="sideTiles"></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Events</div>
+        <div class="events" id="events"></div>
+      </div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">Segments</div>
+    <table class="res" id="segTable"><thead><tr>
+      <th>#</th><th>Type</th><th>Rate</th><th>Target</th><th>Hold</th><th>Status</th>
+    </tr></thead><tbody></tbody></table>
+  </div>
+</section>
+
+<section id="tab-edit" class="hidden">
+  <div class="bar">
+    <select id="editSel" onchange="loadEditor()"></select>
+    <button class="btn ghost sm" onclick="newProfile()">New</button>
+    <button class="btn sm" onclick="saveProfile()">Save</button>
+    <button class="btn ghost danger sm" onclick="deleteProfile()">Delete</button>
+    <button class="btn ghost sm" onclick="dupProfile()">Duplicate</button>
+  </div>
+  <div class="grid2">
+    <div class="card">
+      <div class="card-title">Curve</div>
+      <canvas class="chart" id="editChart" width="700" height="360"></canvas>
+      <p class="sub" style="margin-top:8px">Drag points to change target temperature. Use the table for exact rates and holds.</p>
+    </div>
+    <div class="card">
+      <div class="fld"><label class="f">Name</label><input id="pName"></div>
+      <div class="card-title">Heat segments</div>
+      <table class="res" id="segEdit"><thead><tr><th>Rate</th><th>Target</th><th>Hold min</th><th></th></tr></thead><tbody></tbody></table>
+      <button class="btn ghost sm" onclick="addSeg()">+ Segment</button>
+      <div class="sep" style="height:1px;background:#0f3460;margin:14px 0"></div>
+      <div class="chk"><input type="checkbox" id="qEn"> Quartz inversion band</div>
+      <div class="grid3">
+        <div><label class="f">Center</label><input id="qC" type="number" step="1"></div>
+        <div><label class="f">Band ±</label><input id="qB" type="number" step="1"></div>
+        <div><label class="f">Heat rate</label><input id="qRH" type="number" step="1"></div>
+      </div>
+      <div class="fld" style="margin-top:8px"><label class="f">Cool rate</label><input id="qRC" type="number" step="1"></div>
+      <div class="chk"><input type="checkbox" id="cEn"> Cristobalite band</div>
+      <div class="grid3">
+        <div><label class="f">Center</label><input id="cC" type="number" step="1"></div>
+        <div><label class="f">Band ±</label><input id="cB" type="number" step="1"></div>
+        <div><label class="f">Cool rate</label><input id="cRC" type="number" step="1"></div>
+      </div>
+      <div class="chk"><input type="checkbox" id="fdEn"> Fire-down / anneal</div>
+      <table class="res" id="fdEdit"><thead><tr><th>Rate</th><th>Target</th><th>Hold min</th><th></th></tr></thead><tbody></tbody></table>
+      <button class="btn ghost sm" onclick="addFd()">+ Fire-down segment</button>
+    </div>
+  </div>
+</section>
+
+<section id="tab-admin" class="hidden">
+  <div class="sec" id="loginBox">
+    <h2>Admin login</h2>
+    <div class="row">
+      <input id="adminPass" type="password" placeholder="Password (default admin)" style="max-width:240px">
+      <button class="btn" onclick="doLogin()">Log in</button>
+    </div>
+    <p class="st" id="loginSt"></p>
+  </div>
+  <div id="adminBody" class="hidden">
+    <div class="sec">
+      <h2>Display &amp; kiln</h2>
+      <div class="chk"><input type="checkbox" id="s_useF"> Show Fahrenheit</div>
+      <div class="grid3">
+        <div><label class="f">Element watts</label><input id="s_watts" type="number"></div>
+        <div><label class="f">Cost / kWh</label><input id="s_cost" type="number" step="0.01"></div>
+        <div><label class="f">SSR window (s)</label><input id="s_ssr" type="number" step="0.5"></div>
+      </div>
+    </div>
+    <div class="sec">
+      <h2>PID</h2>
+      <div class="grid3">
+        <div><label class="f">Kp</label><input id="s_kp" type="number" step="0.01"></div>
+        <div><label class="f">Ki</label><input id="s_ki" type="number" step="0.001"></div>
+        <div><label class="f">Kd</label><input id="s_kd" type="number" step="0.1"></div>
+      </div>
+      <div class="fld" style="max-width:200px;margin-top:10px"><label class="f">Kf (feed-forward % per °C/h)</label><input id="s_kf" type="number" step="0.01"></div>
+    </div>
+    <div class="sec">
+      <h2>Autotune</h2>
+      <p style="font-size:.83rem;color:#80cbc4;margin-bottom:10px">Relay-feedback around a target. Uses a lot of energy and will overshoot — run on an empty kiln. Tyreus–Luyben gains are applied on accept.</p>
+      <div class="row">
+        <div><label class="f">Target</label><input id="tuneT" type="number" value="500" style="width:110px"></div>
+        <button class="btn warn" onclick="tuneStart()">Start autotune</button>
+        <button class="btn ghost" onclick="postAuth('/api/autotune/stop')">Stop</button>
+        <button class="btn go" onclick="postAuth('/api/autotune/accept')">Accept T–L</button>
+        <button class="btn ghost danger" onclick="postAuth('/api/autotune/reject')">Reject</button>
+      </div>
+      <p class="st" id="tuneSt"></p>
+    </div>
+    <div class="sec">
+      <h2>Safety</h2>
+      <div class="grid3">
+        <div><label class="f">Max temp (C)</label><input id="s_maxT" type="number"></div>
+        <div><label class="f">Stall minutes</label><input id="s_stallM" type="number"></div>
+        <div><label class="f">Max duration (min)</label><input id="s_maxDur" type="number"></div>
+        <div><label class="f">Hold band (C)</label><input id="s_holdB" type="number"></div>
+        <div><label class="f">Lag limit (C)</label><input id="s_lag" type="number"></div>
+        <div><label class="f">Resume band (C)</label><input id="s_resume" type="number"></div>
+      </div>
+    </div>
+    <div class="sec">
+      <h2>Hardware</h2>
+      <div class="grid3">
+        <div><label class="f">Thermocouple chip</label>
+          <select id="s_tc"><option value="0">MAX31856</option><option value="1">MAX31855</option></select></div>
+        <div><label class="f">SSR GPIO</label><input id="s_pinSsr" type="number"></div>
+        <div><label class="f">TC CS GPIO</label><input id="s_pinCs" type="number"></div>
+        <div><label class="f">SPI SCK</label><input id="s_pinSck" type="number"></div>
+        <div><label class="f">SPI MISO</label><input id="s_pinMiso" type="number"></div>
+        <div><label class="f">SPI MOSI</label><input id="s_pinMosi" type="number"></div>
+        <div><label class="f">Safety relay GPIO (255=off)</label><input id="s_pinSafe" type="number"></div>
+      </div>
+      <p style="font-size:.78rem;color:#607d8b;margin:8px 0 12px">Pin changes apply after Save and a reboot.</p>
+    </div>
+    <div class="sec">
+      <h2>MQTT / Node-RED (Mosquitto)</h2>
+      <div class="chk"><input type="checkbox" id="s_mqEn"> Enable MQTT</div>
+      <div class="chk"><input type="checkbox" id="s_mqRem"> Allow remote start</div>
+      <div class="grid3">
+        <div><label class="f">Broker host</label><input id="s_mqHost"></div>
+        <div><label class="f">Port</label><input id="s_mqPort" type="number"></div>
+        <div><label class="f">Base topic</label><input id="s_mqBase"></div>
+        <div><label class="f">Username</label><input id="s_mqUser"></div>
+        <div><label class="f">Password</label><input id="s_mqPass" type="password"></div>
+        <div><label class="f">Client ID</label><input id="s_mqCli"></div>
+        <div><label class="f">Publish interval (s)</label><input id="s_mqInt" type="number"></div>
+      </div>
+    </div>
+    <div class="sec">
+      <h2>Admin password</h2>
+      <div class="row"><input id="s_admin" type="password" style="max-width:220px" placeholder="new password">
+      </div>
+    </div>
+    <div class="bar">
+      <button class="btn" onclick="saveSettings()">Save settings</button>
+      <p class="st" id="setSt"></p>
+    </div>
+    <div class="sec">
+      <h2>OTA firmware update</h2>
+      <p style="font-size:.83rem;color:#80cbc4;margin-bottom:10px">Upload <code>.pio/build/esp32-s3-devkitc-1/firmware.bin</code>. Refused while a firing is running.</p>
+      <input type="file" id="otaBin" accept=".bin">
+      <button class="btn" onclick="doOTA()">Flash firmware</button>
+      <div class="prog" id="otaProg"><div class="prog-bar" id="otaBar"></div></div>
+      <p class="st" id="otaSt"></p>
+    </div>
+    <div class="sec">
+      <h2>Files (LittleFS)</h2>
+      <p style="font-size:.83rem;color:#80cbc4;margin-bottom:10px">Upload reference PDFs and manuals into <code>/docs</code>.</p>
+      <input type="file" id="docFile">
+      <button class="btn sm" onclick="uploadDoc()">Upload</button>
+      <table class="res" id="docTable"></table>
+      <iframe id="pdfView" class="hidden"></iframe>
+      <div class="card-title" style="margin-top:16px">Firing logs</div>
+      <table class="res" id="logTable"></table>
+    </div>
+    <div class="sec">
+      <h2>Status LED</h2>
+      <div class="row">
+        <input id="ledPin" type="number" style="width:80px">
+        <button class="btn" onclick="testLed()">Save &amp; test</button>
+      </div>
+      <p class="st" id="ledSt"></p>
+    </div>
+    <div class="sec">
+      <h2>Device info</h2>
+      <table class="res" id="info"></table>
+      <div class="row" style="margin-top:12px">
+        <a class="btn" href="/wifi-setup">WiFi setup</a>
+        <button class="btn danger" onclick="if(confirm('Clear WiFi and restart?'))location.href='/wifi-reset'">Reset WiFi</button>
+        <button class="btn danger" onclick="if(confirm('Reboot?'))postAuth('/api/reboot')">Reboot</button>
+        <button class="btn ghost danger" onclick="if(confirm('Factory reset settings?'))postAuth('/api/factory')">Factory reset</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+const $=id=>document.getElementById(id);
+let token=localStorage.getItem('kiln_token')||'';
+let S=null, hist=[], profile=null, profiles=[], editP=null, drag=-1, events=[];
+let useF=true;
+
+function CtoD(c){return useF?c*9/5+32:c}
+function DtoC(d){return useF?(d-32)*5/9:d}
+function RtoD(r){return useF?r*9/5:r}
+function DtoR(r){return useF?r*5/9:r}
+function uT(){return useF?'°F':'°C'}
+function uR(){return useF?'°F/h':'°C/h'}
+function fmtT(c){return isFinite(c)?CtoD(c).toFixed(1):'—'}
+function fmtR(r){return isFinite(r)?RtoD(r).toFixed(0):'—'}
+function fmtTime(sec){
+  if(!isFinite(sec)||sec<0)return '—';
+  const h=Math.floor(sec/3600),m=Math.floor(sec%3600/60);
+  return h+'h '+String(m).padStart(2,'0')+'m';
+}
+function post(url,body){
+  return fetch(url,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:body||''});
+}
+function authHdr(){const h={'X-Auth':token};return h;}
+function postAuth(url,body){
+  return fetch(url,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded','X-Auth':token},body:body||''});
+}
+
+function setTab(t){
+  document.querySelectorAll('.tabs button').forEach(b=>b.classList.toggle('on',b.dataset.t===t));
+  $('tab-dash').classList.toggle('hidden',t!=='dash');
+  $('tab-edit').classList.toggle('hidden',t!=='edit');
+  $('tab-admin').classList.toggle('hidden',t!=='admin');
+  if(t==='admin'){checkAuth();loadInfo();loadFiles();}
+  if(t==='edit')loadEditorList();
+}
+
+function tile(label,val,sub){return `<div><b>${val}</b><span>${label}</span>${sub?`<em>${sub}</em>`:''}</div>`}
+
+function renderTiles(){
+  if(!S)return;
+  const eta=S.eta?new Date(S.eta*1000).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}):'—';
+  $('tiles').innerHTML=
+    tile('Temperature',fmtT(S.temp)+' '+uT(),'')+
+    tile('Setpoint',fmtT(S.setpoint)+' '+uT(),'')+
+    tile('Error',isFinite(S.temp)&&isFinite(S.setpoint)?(CtoD(S.temp)-CtoD(S.setpoint)).toFixed(1)+' '+uT():'—','')+
+    tile('Output',S.output.toFixed(0)+'%', 'window '+S.windowDuty.toFixed(0)+'%')+
+    tile('Rate 1 min',fmtR(S.rate1)+' '+uR(), 'target '+fmtR(S.rateTarget))+
+    tile('Rate 5 min',fmtR(S.rate5)+' '+uR(),'');
+  $('sideTiles').innerHTML=
+    tile('Segment', (S.seg>=0? (S.seg+1)+'/'+S.segCount : '—'), S.segType)+
+    tile('Seg left', fmtTime(S.segRemain),'')+
+    tile('Remaining', fmtTime(S.remain), 'ETA '+eta)+
+    tile('Elapsed', fmtTime(S.elapsed),'')+
+    tile('P / I / D', S.p.toFixed(1)+' / '+S.i.toFixed(1)+' / '+S.d.toFixed(1), 'FF '+S.ff.toFixed(1))+
+    tile('Peak', fmtT(S.peak)+' '+uT(), 'held '+fmtTime(S.peakHold))+
+    tile('Energy', S.kwh.toFixed(2)+' kWh', '$'+S.cost.toFixed(2))+
+    tile('Cold junction', fmtT(S.cj)+' '+uT(), S.tcOk?'OK':S.tcFault)+
+    tile('Hold-back', S.holdBack?'WAITING':'on track', (S.inQuartz?'quartz ':'')+(S.inCristo?'cristo':''))+
+    tile('System', S.ap?'AP':(S.rssi+' dBm'), (S.mqtt?'MQTT':'no MQTT')+' · '+(S.heap/1024).toFixed(0)+' KB');
+}
+
+function drawChart(cv, planned, actual, bands){
+  const ctx=cv.getContext('2d'), W=cv.width, H=cv.height;
+  ctx.clearRect(0,0,W,H);
+  const pad={l:52,r:48,t:16,b:28};
+  let tMin=0,tMax=60,yMin=0,yMax=200;
+  const pts=[].concat(planned||[], actual||[]);
+  if(pts.length){
+    tMin=Math.min(...pts.map(p=>p[0]));
+    tMax=Math.max(...pts.map(p=>p[0]));
+    yMin=Math.min(...pts.map(p=>p[1]));
+    yMax=Math.max(...pts.map(p=>p[1]));
+  }
+  if(tMax<=tMin)tMax=tMin+1;
+  yMin=Math.floor((yMin-20)/50)*50; yMax=Math.ceil((yMax+20)/50)*50;
+  if(yMax<=yMin)yMax=yMin+100;
+  const x=t=>pad.l+(t-tMin)/(tMax-tMin)*(W-pad.l-pad.r);
+  const y=v=>H-pad.b-(v-yMin)/(yMax-yMin)*(H-pad.t-pad.b);
+  ctx.strokeStyle='#0f3460'; ctx.fillStyle='#546e7a'; ctx.font='11px sans-serif'; ctx.lineWidth=1;
+  for(let v=yMin;v<=yMax;v+=(yMax-yMin)/4){
+    ctx.beginPath();ctx.moveTo(pad.l,y(v));ctx.lineTo(W-pad.r,y(v));ctx.stroke();
+    ctx.fillText(CtoD(v).toFixed(0),6,y(v)+4);
+  }
+  if(bands){
+    bands.forEach(b=>{
+      if(!b||!b.enabled)return;
+      ctx.fillStyle=b.color;
+      ctx.fillRect(pad.l, y(b.center+b.band), W-pad.l-pad.r, y(b.center-b.band)-y(b.center+b.band));
+    });
+  }
+  function line(arr,color,w){
+    if(!arr||arr.length<2)return;
+    ctx.beginPath();ctx.strokeStyle=color;ctx.lineWidth=w;
+    arr.forEach((p,i)=>{const X=x(p[0]),Y=y(p[1]); i?ctx.lineTo(X,Y):ctx.moveTo(X,Y);});
+    ctx.stroke();
+  }
+  line(planned,'#546e7a',1.5);
+  if(actual&&actual.length){
+    ctx.beginPath();ctx.strokeStyle='#26c6da';ctx.lineWidth=1;ctx.globalAlpha=.35;
+    actual.forEach((p,i)=>{
+      const X=x(p[0]), Y2=H-pad.b-(p[2]||0)/100*(H-pad.t-pad.b)*0.35;
+      i?ctx.lineTo(X,Y2):ctx.moveTo(X,Y2);
+    });
+    ctx.stroke();ctx.globalAlpha=1;
+  }
+  line(actual&&actual.map(p=>[p[0],p[1]]),'#4fc3f7',2.2);
+  ctx.fillStyle='#546e7a';
+  ctx.fillText('min', pad.l, H-8);
+  ctx.fillText(uT(), 8, 14);
+}
+
+function planFrom(p,t0){
+  if(!p||!p.segments)return [];
+  let t=0,temp=t0,pts=[[0,temp]];
+  const run=segs=>{
+    segs.forEach(s=>{
+      const r=s.rate||1;
+      t+=Math.abs(s.target-temp)/r*60;
+      temp=s.target; pts.push([t,temp]);
+      if(s.hold){t+=s.hold;pts.push([t,temp]);}
+    });
+  };
+  run(p.segments);
+  if(p.fireDown&&p.fireDown.enabled) run(p.fireDown.segments||[]);
+  return pts;
+}
+
+function renderChart(){
+  const t0=hist.length&&isFinite(hist[0][1])?hist[0][1]:(S&&isFinite(S.temp)?S.temp:20);
+  const planned=planFrom(profile,t0);
+  const tBase=hist.length?hist[0][0]:0;
+  const actual=hist.map(h=>[(h[0]-tBase)/60, h[1], h[3]]);
+  const bands=[];
+  if(profile){
+    if(profile.quartz) bands.push({...profile.quartz,color:'rgba(255,183,77,.12)'});
+    if(profile.cristobalite) bands.push({...profile.cristobalite,color:'rgba(129,212,250,.10)'});
+  }
+  drawChart($('chart'), planned, actual, bands);
+}
+
+function renderSegTable(){
+  const tb=$('segTable').querySelector('tbody'); tb.innerHTML='';
+  if(!profile)return;
+  const rows=[];
+  profile.segments.forEach((s,i)=>rows.push({s,type:'heat',i}));
+  if(profile.fireDown&&profile.fireDown.enabled)
+    (profile.fireDown.segments||[]).forEach((s,i)=>rows.push({s,type:'fire-down',i}));
+  rows.forEach((r,idx)=>{
+    const tr=tb.insertRow();
+    if(S&&S.seg===idx)tr.className='on';
+    const st=S&&S.seg===idx?(S.holdBack?'waiting':S.segType):(S&&S.seg>idx?'done':'pending');
+    [idx+1,r.type,fmtR(r.s.rate)+' '+uR(),fmtT(r.s.target)+' '+uT(),r.s.hold+' min',st]
+      .forEach(v=>tr.insertCell().textContent=v);
+  });
+}
+
+function pushEvent(msg){
+  if(!msg||events[0]===msg)return;
+  events.unshift(new Date().toLocaleTimeString()+'  '+msg);
+  if(events.length>40)events.pop();
+  $('events').innerHTML=events.map(e=>e).join('<br>');
+}
+
+async function loadProfiles(){
+  profiles=await fetch('/api/profiles').then(r=>r.json()).catch(()=>[]);
+  const fill=sel=>{
+    const cur=$(sel).value; $(sel).innerHTML='';
+    profiles.forEach(p=>{
+      const n=p.name.replace(/\.json$/,'');
+      $(sel).add(new Option(n,n));
+    });
+    if(cur)$(sel).value=cur;
+  };
+  fill('profSel'); fill('editSel');
+}
+
+async function loadActiveProfile(){
+  const name=$('profSel').value || (S&&S.profile);
+  if(!name)return;
+  profile=await fetch('/api/profiles/get?name='+encodeURIComponent(name)).then(r=>r.ok?r.json():null).catch(()=>null);
+  renderSegTable();
+}
+
+async function poll(){
+  try{
+    const d=await fetch('/api/status',{cache:'no-store'}).then(r=>r.json());
+    S=d; useF=!!d.useF; online=true;
+    $('cDot').style.background=d.tcOk?'#4caf50':'#ef5350';
+    $('cTxt').textContent=d.tcOk?(d.firing?'FIRING':'IDLE'):'TC FAULT';
+    $('cTxt').style.color=d.tcOk?(d.firing?'#ffb74d':'#81c784'):'#ef5350';
+    $('apBanner').classList.toggle('hidden',!d.ap);
+    $('host').textContent=d.ap?'192.168.4.1':'kiln.local';
+    $('faultBanner').classList.toggle('hidden',!d.faulted);
+    $('faultBanner').textContent=d.fault||'';
+    $('btnStart').disabled=d.firing;
+    $('btnPause').textContent=d.paused?'Resume':'Pause';
+    if(d.event)pushEvent(d.event);
+    if(d.tuneKu) $('tuneSt').textContent='Ku='+d.tuneKu.toFixed(2)+'  Pu='+d.tunePu.toFixed(1)+'s  cycles='+d.tuneCycle;
+    renderTiles();
+    if(d.profile && (!profile || profile.name!==d.profile)) loadActiveProfile();
+    renderSegTable();
+    renderChart();
+  }catch(e){
+    $('cDot').style.background='#ef5350';
+    $('cTxt').textContent='OFFLINE';
+  }
+}
+let online=false;
+setInterval(poll,1000);
+
+async function loadHist(){
+  hist=await fetch('/api/history').then(r=>r.json()).catch(()=>[]);
+}
+setInterval(async()=>{
+  const h=await fetch('/api/history').then(r=>r.json()).catch(()=>null);
+  if(h)hist=h;
+},5000);
+
+function doStart(){
+  const name=$('profSel').value; if(!name)return;
+  const delay=Math.max(0,+$('delayMin').value||0)*60;
+  post('/api/fire/start','profile='+encodeURIComponent(name)+'&delay='+delay);
+}
+function doPause(){
+  post(S&&S.paused?'/api/fire/resume':'/api/fire/pause');
+}
+
+$('profSel').addEventListener('change',loadActiveProfile);
+
+function segsFromTable(id){
+  const rows=[...$(id).querySelectorAll('tbody tr')];
+  return rows.map(tr=>{
+    const i=tr.querySelectorAll('input');
+    return {rate:DtoR(+i[0].value), target:DtoC(+i[1].value), hold:+i[2].value||0};
+  });
+}
+function fillSegTable(id, segs){
+  const tb=$(id).querySelector('tbody'); tb.innerHTML='';
+  (segs||[]).forEach((s,idx)=>{
+    const tr=tb.insertRow();
+    tr.innerHTML=`<td><input type="number" step="1" value="${RtoD(s.rate).toFixed(0)}"></td>
+      <td><input type="number" step="1" value="${CtoD(s.target).toFixed(0)}"></td>
+      <td><input type="number" step="1" value="${s.hold||0}"></td>
+      <td><button class="btn ghost sm" onclick="this.closest('tr').remove();drawEdit()">✕</button></td>`;
+    tr.querySelectorAll('input').forEach(inp=>inp.addEventListener('input',drawEdit));
+  });
+}
+function addSeg(){ fillSegTable('segEdit', segsFromTable('segEdit').concat([{rate:DtoR(100),target:DtoC(useF?200:100),hold:0}])); drawEdit(); }
+function addFd(){ fillSegTable('fdEdit', segsFromTable('fdEdit').concat([{rate:DtoR(80),target:DtoC(useF?960:516),hold:0}])); drawEdit(); }
+
+function gatherEdit(){
+  const p={
+    name:$('pName').value.trim()||'untitled',
+    segments:segsFromTable('segEdit'),
+    quartz:{enabled:$('qEn').checked,center:DtoC(+$('qC').value),band:useF?(+$('qB').value)*5/9:+$('qB').value,rateHeat:DtoR(+$('qRH').value),rateCool:DtoR(+$('qRC').value)},
+    cristobalite:{enabled:$('cEn').checked,center:DtoC(+$('cC').value),band:useF?(+$('cB').value)*5/9:+$('cB').value,rateHeat:DtoR(+$('cRC').value),rateCool:DtoR(+$('cRC').value)},
+    fireDown:{enabled:$('fdEn').checked,segments:segsFromTable('fdEdit')}
+  };
+  return p;
+}
+function applyEdit(p){
+  editP=p; $('pName').value=p.name||'';
+  fillSegTable('segEdit', p.segments||[]);
+  const q=p.quartz||{}; $('qEn').checked=!!q.enabled;
+  $('qC').value=CtoD(q.center||573).toFixed(0);
+  $('qB').value=(useF?(q.band||25)*9/5:(q.band||25)).toFixed(0);
+  $('qRH').value=RtoD(q.rateHeat||50).toFixed(0);
+  $('qRC').value=RtoD(q.rateCool||50).toFixed(0);
+  const c=p.cristobalite||{}; $('cEn').checked=!!c.enabled;
+  $('cC').value=CtoD(c.center||226).toFixed(0);
+  $('cB').value=(useF?(c.band||20)*9/5:(c.band||20)).toFixed(0);
+  $('cRC').value=RtoD(c.rateCool||40).toFixed(0);
+  $('fdEn').checked=!!(p.fireDown&&p.fireDown.enabled);
+  fillSegTable('fdEdit', (p.fireDown&&p.fireDown.segments)||[]);
+  drawEdit();
+}
+function drawEdit(){
+  editP=gatherEdit();
+  const planned=planFrom(editP,20);
+  const bands=[{...editP.quartz,color:'rgba(255,183,77,.12)'},{...editP.cristobalite,color:'rgba(129,212,250,.10)'}];
+  drawChart($('editChart'), planned, [], bands);
+  const cv=$('editChart');
+  const ctx=cv.getContext('2d');
+  const pad={l:52,r:48,t:16,b:28};
+  if(!planned.length)return;
+  const tMin=0,tMax=Math.max(...planned.map(p=>p[0]),1);
+  const yMin=Math.floor((Math.min(...planned.map(p=>p[1]))-20)/50)*50;
+  const yMax=Math.ceil((Math.max(...planned.map(p=>p[1]))+20)/50)*50;
+  planned.forEach((p,i)=>{
+    const X=pad.l+(p[0]-tMin)/(tMax-tMin)*(cv.width-pad.l-pad.r);
+    const Y=cv.height-pad.b-(p[1]-yMin)/((yMax-yMin)||1)*(cv.height-pad.t-pad.b);
+    ctx.fillStyle='#4fc3f7'; ctx.beginPath(); ctx.arc(X,Y,6,0,6.3); ctx.fill();
+  });
+}
+async function loadEditorList(){ await loadProfiles(); if($('editSel').options.length&&!editP) loadEditor(); }
+async function loadEditor(){
+  const name=$('editSel').value; if(!name)return;
+  const p=await fetch('/api/profiles/get?name='+encodeURIComponent(name)).then(r=>r.json());
+  applyEdit(p);
+}
+function newProfile(){
+  applyEdit({name:'New profile',segments:[{rate:100,target:200,hold:0},{rate:150,target:1100,hold:10}],
+    quartz:{enabled:true,center:573,band:25,rateHeat:50,rateCool:50},
+    cristobalite:{enabled:false,center:226,band:20,rateHeat:40,rateCool:40},
+    fireDown:{enabled:false,segments:[]}});
+}
+async function saveProfile(){
+  const p=gatherEdit();
+  const r=await post('/api/profiles','data='+encodeURIComponent(JSON.stringify(p)));
+  $('setSt').textContent=r.ok?'Profile saved.':'Save failed';
+  await loadProfiles();
+}
+async function deleteProfile(){
+  const name=$('pName').value; if(!name||!confirm('Delete '+name+'?'))return;
+  await post('/api/profiles/delete','name='+encodeURIComponent(name));
+  editP=null; await loadProfiles(); loadEditor();
+}
+function dupProfile(){ $('pName').value=($('pName').value||'profile')+' copy'; }
+
+(function editDrag(){
+  const cv=$('editChart');
+  function hit(ev){
+    const r=cv.getBoundingClientRect();
+    const mx=(ev.clientX-r.left)*cv.width/r.width, my=(ev.clientY-r.top)*cv.height/r.height;
+    const p=planFrom(gatherEdit(),20);
+    const pad={l:52,r:48,t:16,b:28};
+    if(!p.length)return -1;
+    const tMax=Math.max(...p.map(x=>x[0]),1);
+    const yMin=Math.floor((Math.min(...p.map(x=>x[1]))-20)/50)*50;
+    const yMax=Math.ceil((Math.max(...p.map(x=>x[1]))+20)/50)*50;
+    for(let i=1;i<p.length;i++){
+      const X=pad.l+p[i][0]/tMax*(cv.width-pad.l-pad.r);
+      const Y=cv.height-pad.b-(p[i][1]-yMin)/((yMax-yMin)||1)*(cv.height-pad.t-pad.b);
+      if((mx-X)**2+(my-Y)**2<120)return i;
+    }
+    return -1;
+  }
+  cv.addEventListener('mousedown',ev=>{drag=hit(ev);});
+  window.addEventListener('mouseup',()=>{drag=-1;});
+  cv.addEventListener('mousemove',ev=>{
+    if(drag<0)return;
+    const r=cv.getBoundingClientRect();
+    const my=(ev.clientY-r.top)*cv.height/r.height;
+    const p=planFrom(gatherEdit(),20);
+    const yMin=Math.floor((Math.min(...p.map(x=>x[1]))-20)/50)*50;
+    const yMax=Math.ceil((Math.max(...p.map(x=>x[1]))+20)/50)*50;
+    const pad={t:16,b:28};
+    let temp=yMin+(cv.height-pad.b-my)/(cv.height-pad.t-pad.b)*(yMax-yMin);
+    const segs=segsFromTable('segEdit');
+    // map planned vertex index back to a heat-segment target (skip hold duplicates)
+    if(segs[drag-1]) {
+      segs[drag-1].target=temp;
+      fillSegTable('segEdit', segs);
+    }
+    drawEdit();
+  });
+})();
+
+async function checkAuth(){
+  const r=await fetch('/api/auth',{headers:authHdr()}).then(x=>x.json()).catch(()=>({ok:false}));
+  $('loginBox').classList.toggle('hidden',r.ok);
+  $('adminBody').classList.toggle('hidden',!r.ok);
+  if(r.ok){loadSettings();loadFiles();loadInfo();}
+}
+async function doLogin(){
+  const r=await post('/api/login','password='+encodeURIComponent($('adminPass').value));
+  if(!r.ok){$('loginSt').textContent='Wrong password';return;}
+  const j=await r.json(); token=j.token; localStorage.setItem('kiln_token',token);
+  checkAuth();
+}
+async function loadSettings(){
+  const s=await fetch('/api/settings',{headers:authHdr()}).then(r=>r.ok?r.json():null);
+  if(!s)return;
+  const map={s_useF:'useFahrenheit',s_watts:'elementWatts',s_cost:'costPerKwh',s_ssr:'ssrWindowSec',
+    s_kp:'kp',s_ki:'ki',s_kd:'kd',s_kf:'kf',s_maxT:'maxTempC',s_stallM:'stallMinutes',s_maxDur:'maxDurationMin',
+    s_holdB:'holdBandC',s_lag:'lagLimitC',s_resume:'resumeBandC',s_tc:'tcChip',s_pinSsr:'pinSsr',s_pinCs:'pinTcCs',
+    s_pinSck:'pinSck',s_pinMiso:'pinMiso',s_pinMosi:'pinMosi',s_pinSafe:'pinSafetyRelay',
+    s_mqEn:'mqttEnabled',s_mqRem:'mqttRemoteStart',s_mqHost:'mqttHost',s_mqPort:'mqttPort',s_mqBase:'mqttBase',
+    s_mqUser:'mqttUser',s_mqPass:'mqttPass',s_mqCli:'mqttClient',s_mqInt:'mqttIntervalSec',s_admin:'adminPass'};
+  Object.keys(map).forEach(id=>{
+    const el=$(id); if(!el)return;
+    const v=s[map[id]];
+    if(el.type==='checkbox')el.checked=!!v; else el.value=v==null?'':v;
+  });
+}
+async function saveSettings(){
+  const body={
+    useFahrenheit:$('s_useF').checked, elementWatts:+$('s_watts').value, costPerKwh:+$('s_cost').value,
+    ssrWindowSec:+$('s_ssr').value, kp:+$('s_kp').value, ki:+$('s_ki').value, kd:+$('s_kd').value, kf:+$('s_kf').value,
+    maxTempC:+$('s_maxT').value, stallMinutes:+$('s_stallM').value, maxDurationMin:+$('s_maxDur').value,
+    holdBandC:+$('s_holdB').value, lagLimitC:+$('s_lag').value, resumeBandC:+$('s_resume').value,
+    tcChip:+$('s_tc').value, pinSsr:+$('s_pinSsr').value, pinTcCs:+$('s_pinCs').value,
+    pinSck:+$('s_pinSck').value, pinMiso:+$('s_pinMiso').value, pinMosi:+$('s_pinMosi').value,
+    pinSafetyRelay:+$('s_pinSafe').value, mqttEnabled:$('s_mqEn').checked, mqttRemoteStart:$('s_mqRem').checked,
+    mqttHost:$('s_mqHost').value, mqttPort:+$('s_mqPort').value, mqttBase:$('s_mqBase').value,
+    mqttUser:$('s_mqUser').value, mqttPass:$('s_mqPass').value, mqttClient:$('s_mqCli').value,
+    mqttIntervalSec:+$('s_mqInt').value, adminPass:$('s_admin').value
+  };
+  const r=await fetch('/api/settings',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded','X-Auth':token},
+    body:'data='+encodeURIComponent(JSON.stringify(body))});
+  $('setSt').textContent=r.ok?'Saved. Reboot if you changed pins.':'Save failed: '+await r.text();
+  useF=body.useFahrenheit;
+}
+function tuneStart(){
+  const t=DtoC(+$('tuneT').value||500);
+  postAuth('/api/autotune/start','target='+t);
+}
+function doOTA(){
+  const f=$('otaBin').files[0]; if(!f)return;
+  $('otaProg').style.display='block'; $('otaSt').textContent='Uploading…';
+  const fd=new FormData(); fd.append('firmware',f,f.name);
+  const x=new XMLHttpRequest(); x.timeout=120000;
+  x.upload.onprogress=e=>{if(e.lengthComputable)$('otaBar').style.width=(e.loaded/e.total*100)+'%';};
+  x.onload=()=>{$('otaSt').textContent=x.status===200?'Done — restarting…':'Error: '+x.responseText; if(x.status===200)setTimeout(()=>location.reload(),8000);};
+  x.onerror=()=>$('otaSt').textContent='Connection lost';
+  x.open('POST','/api/ota'); x.setRequestHeader('X-Auth',token); x.send(fd);
+}
+async function loadFiles(){
+  const docs=await fetch('/api/files?dir=/docs',{headers:authHdr()}).then(r=>r.ok?r.json():[]).catch(()=>[]);
+  const tb=$('docTable'); tb.innerHTML='';
+  docs.forEach(d=>{
+    const tr=tb.insertRow();
+    tr.insertCell().textContent=d.name;
+    tr.insertCell().textContent=(d.size/1024).toFixed(1)+' KB';
+    const c=tr.insertCell();
+    const a=document.createElement('a'); a.href='#'; a.textContent='Open'; a.style.color='#4fc3f7';
+    a.onclick=()=>{ $('pdfView').classList.remove('hidden'); $('pdfView').src='/api/files/download?path=/docs/'+encodeURIComponent(d.name); return false; };
+    c.appendChild(a);
+    const del=document.createElement('button'); del.className='btn ghost sm'; del.textContent='✕';
+    del.onclick=()=>postAuth('/api/files/delete','path=/docs/'+encodeURIComponent(d.name)).then(loadFiles);
+    c.appendChild(del);
+  });
+  const logs=await fetch('/api/logs').then(r=>r.json()).catch(()=>[]);
+  const lt=$('logTable'); lt.innerHTML='';
+  logs.forEach(d=>{
+    const tr=lt.insertRow();
+    tr.insertCell().textContent=d.name;
+    tr.insertCell().textContent=(d.size/1024).toFixed(1)+' KB';
+    const c=tr.insertCell();
+    const a=document.createElement('a'); a.href='/api/files/download?path=/logs/'+encodeURIComponent(d.name);
+    a.textContent='Download'; a.style.color='#4fc3f7'; c.appendChild(a);
+  });
+}
+function uploadDoc(){
+  const f=$('docFile').files[0]; if(!f)return;
+  const fd=new FormData(); fd.append('file',f,f.name);
+  const x=new XMLHttpRequest();
+  x.onload=()=>loadFiles();
+  x.open('POST','/api/files/upload'); x.setRequestHeader('X-Auth',token); x.send(fd);
+}
+function testLed(){
+  postAuth('/api/led','pin='+$('ledPin').value).then(r=>r.text()).then(t=>$('ledSt').textContent=t);
+}
+async function loadInfo(){
+  const d=await fetch('/api/info').then(r=>r.json()).catch(()=>null); if(!d)return;
+  const up=d.uptime,h=Math.floor(up/3600),m=Math.floor(up%3600/60);
+  const rows=[['Mode',d.ap?'Hotspot (Kiln-Setup)':'WiFi client'],['Network',d.ssid||'—'],['IP',d.ip],
+    ['Signal',d.ap?'—':d.rssi+' dBm'],['Firmware',d.fw+' ('+d.built+')'],['Uptime',h+'h '+m+'m'],
+    ['Free heap',(d.heap/1024).toFixed(0)+' KB'],
+    ['LittleFS',d.lfs_total?d.lfs_used+' / '+d.lfs_total+' KB':'not mounted'],
+    ['Thermocouple',d.tc_ok?'OK':'fault'],['MQTT',d.mqtt?'connected':'off']];
+  const t=$('info'); t.innerHTML='';
+  rows.forEach(([k,v])=>{const tr=t.insertRow();tr.insertCell().textContent=k;tr.insertCell().textContent=v;});
+  fetch('/api/led').then(r=>r.json()).then(x=>$('ledPin').value=x.pin).catch(()=>{});
+}
+
+['qEn','qC','qB','qRH','qRC','cEn','cC','cB','cRC','fdEn'].forEach(id=>{
+  const el=$(id); if(el)el.addEventListener('input',drawEdit);
+});
+
+loadProfiles().then(loadActiveProfile);
+loadHist(); poll();
+if(location.hash==='#admin')setTab('admin');
+</script>
+</body></html>

@@ -1,0 +1,48 @@
+[
+  {
+    "id": "kiln_mqtt_in",
+    "type": "mqtt in",
+    "name": "kiln/status",
+    "topic": "kiln/status",
+    "qos": "0",
+    "broker": "",
+    "x": 160,
+    "y": 80,
+    "wires": [["kiln_parse"]]
+  },
+  {
+    "id": "kiln_parse",
+    "type": "json",
+    "name": "parse",
+    "x": 330,
+    "y": 80,
+    "wires": [["kiln_debug"]]
+  },
+  {
+    "id": "kiln_debug",
+    "type": "debug",
+    "name": "kiln",
+    "x": 490,
+    "y": 80,
+    "wires": []
+  },
+  {
+    "id": "kiln_alarm",
+    "type": "mqtt in",
+    "name": "kiln/alarm",
+    "topic": "kiln/alarm",
+    "qos": "0",
+    "broker": "",
+    "x": 160,
+    "y": 160,
+    "wires": [["kiln_alarm_dbg"]]
+  },
+  {
+    "id": "kiln_alarm_dbg",
+    "type": "debug",
+    "name": "alarm",
+    "x": 330,
+    "y": 160,
+    "wires": []
+  }
+]
